@@ -10,6 +10,7 @@ const productRoutes = require('./routes/productRoutes');
 const leadRoutes = require('./routes/leadRoutes');
 const salesRoutes = require('./routes/sales');
 const connectDB   = require('./config/db');
+const userManagementRoutes = require('./routes/userManagementRoutes');
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use('/api/customers', authenticate, customerRoutes);
 app.use('/api/sales', authenticate, salesRoutes);
 app.use('/api/products', authenticate, productRoutes);
 app.use('/api/leads', authenticate, leadRoutes);
+app.use('/api/userManagement', authenticate, userManagementRoutes);
 
 const PORT = process.env.PORT || 5007;
 app.listen(PORT, () => {

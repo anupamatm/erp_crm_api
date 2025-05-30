@@ -5,10 +5,41 @@ const { body, validationResult } = require('express-validator');
 // Account Controllers
 const getAccounts = async (req, res) => {
   try {
-    const accounts = await Account.find()
-      .populate('transactions')
+    const { search } = req.query;
+    const query = {};
+    
+    // Add search criteria if search term is provided
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { accountNumber: { $regex: search, $options: 'i' } },
+        { bankName: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Get total count for pagination
+    const total = await Account.countDocuments(query);
+    
+    const accounts = await Account.find(query)
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: 'transactions',
+        options: { sort: { date: -1 } } // Sort transactions by date
+      })
       .select('-__v');
-    res.json(accounts);
+      
+    res.json({
+      data: accounts,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -24,8 +55,25 @@ const createAccount = async (req, res) => {
     const account = new Account({
       name: req.body.name,
       type: req.body.type,
-      description: req.body.description
+      code: req.body.code,
+      description: req.body.description,
+      currency: req.body.currency,
+      initialBalance: req.body.initialBalance || 0,
+      openingBalance: req.body.openingBalance || 0,
+      currentBalance: req.body.currentBalance || 0,
+      isActive: req.body.isActive !== undefined ? req.body.isActive : true,
+      accountNumber: req.body.accountNumber,
+      bankName: req.body.bankName,
+      branch: req.body.branch,
+      ifscCode: req.body.ifscCode,
+      swiftCode: req.body.swiftCode,
+      taxId: req.body.taxId,
+      notes: req.body.notes,
+      email: req.body.email,
+      website: req.body.website,
+      parentAccount: req.body.parentAccount
     });
+    
     const newAccount = await account.save();
     res.status(201).json(newAccount);
   } catch (err) {
@@ -33,10 +81,14 @@ const createAccount = async (req, res) => {
   }
 };
 
+
 const getAccountById = async (req, res) => {
   try {
     const account = await Account.findById(req.params.id)
-      .populate('transactions')
+      .populate({
+        path: 'transactions',
+        options: { sort: { date: -1 } } // Optional: sort transactions by date
+      })
       .select('-__v');
     if (!account) {
       return res.status(404).json({ message: 'Account not found' });
@@ -46,7 +98,6 @@ const getAccountById = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 const updateAccount = async (req, res) => {
   try {
     const account = await Account.findById(req.params.id);
@@ -54,9 +105,20 @@ const updateAccount = async (req, res) => {
       return res.status(404).json({ message: 'Account not found' });
     }
 
-    account.name = req.body.name || account.name;
-    account.type = req.body.type || account.type;
-    account.description = req.body.description || account.description;
+    // Update only the fields that are provided
+    const updatableFields = [
+      'name', 'type', 'code', 'description', 'currency',
+      'initialBalance', 'openingBalance', 'currentBalance',
+      'isActive', 'accountNumber', 'bankName', 'branch',
+      'ifscCode', 'swiftCode', 'taxId', 'notes', 'email',
+      'website', 'parentAccount'
+    ];
+
+    updatableFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        account[field] = req.body[field];
+      }
+    });
 
     const updatedAccount = await account.save();
     res.json(updatedAccount);

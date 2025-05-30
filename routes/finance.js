@@ -26,7 +26,15 @@ router.post(
   authorize(financeRoles),
   [
     body('name').trim().notEmpty().withMessage('Name is required'),
-    body('type').isIn(['Income', 'Expense', 'Asset', 'Liability']).withMessage('Invalid account type')
+    body('type').isIn(['Income', 'Expense', 'Asset', 'Liability', 'Equity'])
+      .withMessage('Invalid account type'),
+    body('initialBalance').optional().isNumeric().toFloat(),
+    body('openingBalance').optional().isNumeric().toFloat(),
+    body('currentBalance').optional().isNumeric().toFloat(),
+    body('isActive').optional().isBoolean(),
+    body('email').optional().isEmail().withMessage('Invalid email format'),
+    body('website').optional().isURL().withMessage('Invalid URL format'),
+    // Add validation for other fields as needed
   ],
   createAccount
 );

@@ -1,8 +1,8 @@
-// erp-crm-backend/controllers/leadController.js
 const Lead = require('../models/Lead');
-const User = require('../models/User');
-const Customer = require('../models/Customer'); // Assuming Customer model is defined in a separate file
-const mongoose = require('mongoose'); //
+const Customer =require("../models/Customer")// Assuming Customer model is defined
+const mongoose = require('mongoose');
+const csv = require('csv-parser');
+const fs = require('fs');
 
 // Get all leads
 const getLeads = async (req, res) => {
@@ -11,7 +11,7 @@ const getLeads = async (req, res) => {
       .populate('user', 'name email')
       .populate('assignedTo', 'name email')
       .sort({ createdAt: -1 });
-      
+    
     res.json(leads);
   } catch (err) {
     console.error(err.message);
@@ -25,11 +25,11 @@ const getLead = async (req, res) => {
     const lead = await Lead.findById(req.params.id)
       .populate('user', 'name email')
       .populate('assignedTo', 'name email');
-      
+    
     if (!lead) {
       return res.status(404).json({ msg: 'Lead not found' });
     }
-    
+
     res.json(lead);
   } catch (err) {
     console.error(err.message);
@@ -43,21 +43,7 @@ const getLead = async (req, res) => {
 // Create lead
 const createLead = async (req, res) => {
   try {
-    const {
-      firstName,
-      lastName,
-      email,
-      phone,
-      company,
-      source,
-      status,
-      priority,
-      notes,
-      assignedTo,
-      expectedRevenue,
-      closeDate,
-      user
-    } = req.body;
+    const { firstName, lastName, email, phone, company, source, status, priority, notes, assignedTo, expectedRevenue, closeDate, user } = req.body;
 
     const lead = new Lead({
       user: new mongoose.Types.ObjectId(user),
@@ -136,7 +122,7 @@ const getLeadsByStatus = async (req, res) => {
       .populate('user', 'name email')
       .populate('assignedTo', 'name email')
       .sort({ createdAt: -1 });
-      
+
     res.json(leads);
   } catch (err) {
     console.error(err.message);
@@ -152,7 +138,7 @@ const getLeadsBySource = async (req, res) => {
       .populate('user', 'name email')
       .populate('assignedTo', 'name email')
       .sort({ createdAt: -1 });
-      
+
     res.json(leads);
   } catch (err) {
     console.error(err.message);
@@ -246,6 +232,58 @@ const convertToCustomer = async (req, res) => {
   }
 };
 
+// Import multiple leads from CSV
+const importLeads = async (req, res) => {
+  try {
+    const file = req.file; // The uploaded file
+    if (!file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const results = [];
+
+    // Parse the CSV file
+    fs.createReadStream(file.path)
+      .pipe(csv())
+      .on('data', (row) => {
+        results.push(row); // Collect parsed rows
+      })
+      .on('end', async () => {
+        try {
+          // Validate data (optional, depending on your requirements)
+          const validLeads = results.filter(lead => lead.firstName && lead.email);
+          
+          if (validLeads.length === 0) {
+            return res.status(400).json({ message: 'No valid leads found in CSV' });
+          }
+
+          // Enrich lead data if needed (e.g., assigning current user)
+          const enrichedLeads = validLeads.map(lead => ({
+            ...lead,
+            user: req.user.id // Assuming current user is available via req.user
+          }));
+
+          // Insert the leads into the database
+          await Lead.insertMany(enrichedLeads);
+          res.status(200).json({ message: 'Leads imported successfully' });
+        } catch (error) {
+          console.error('Error saving leads:', error);
+          res.status(500).json({ message: 'Error while saving leads to the database' });
+        } finally {
+          // Clean up uploaded file
+          fs.unlinkSync(file.path);
+        }
+      })
+      .on('error', (error) => {
+        console.error('CSV parsing error:', error);
+        res.status(500).json({ message: 'Error parsing CSV file' });
+      });
+  } catch (error) {
+    console.error('Error during lead import:', error);
+    res.status(500).json({ message: 'Server error during import' });
+  }
+};
+
 module.exports = {
   getLeads,
   getLead,
@@ -255,5 +293,6 @@ module.exports = {
   getLeadsByStatus,
   getLeadsBySource,
   getLeadsStats,
-  convertToCustomer
+  convertToCustomer,
+  importLeads
 };

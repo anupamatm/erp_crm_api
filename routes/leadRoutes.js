@@ -10,6 +10,8 @@ const leadRoles = ['admin', 'sales_manager', 'sales_exec'];
 // Apply authentication and authorization to all lead routes
 router.use(authorize(leadRoles));
 
+// CSV Import Route
+router.post('/import', leadController.importLeads);
 // Lead routes
 router.get('/', leadController.getLeads);
 router.get('/stats', leadController.getLeadsStats);

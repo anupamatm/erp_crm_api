@@ -1,5 +1,11 @@
 const Product = require('../models/Product');
 
+const { sendLowStockAlert } = require('../utils/email');
+
+
+const LOW_STOCK_THRESHOLD = 5;
+
+
 // Helper function to format response
 const formatResponse = (data, page, limit, total) => ({
   success: true,
@@ -14,7 +20,15 @@ const formatResponse = (data, page, limit, total) => ({
 
 exports.createProduct = async (req, res) => {
   try {
-    const product = new Product(req.body);
+    const { name, description, price, category, stock, imageUrl } = req.body;
+    const product = new Product({
+      name,
+      description,
+      price,
+      category,
+      stock,
+      imageUrl
+    });
     await product.save();
     res.status(201).json({
       success: true,
@@ -88,27 +102,40 @@ exports.updateProduct = async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     );
+
     if (!product) {
       return res.status(404).json({
         success: false,
         error: 'Product not found',
-        message: 'The requested product does not exist'
+        message: 'The requested product does not exist',
       });
     }
+
+    // Check stock and send email if below threshold
+    if (product.stock < LOW_STOCK_THRESHOLD) {
+      try {
+        await sendLowStockAlert(product);
+      } catch (emailError) {
+        console.error('Error sending low stock email:', emailError);
+        // Optional: You may still respond with success to client, as email failure shouldn't block update
+      }
+    }
+
     res.status(200).json({
       success: true,
       data: product,
-      message: 'Product updated successfully'
+      message: 'Product updated successfully',
     });
   } catch (err) {
     console.error('Error updating product:', err);
     res.status(400).json({
       success: false,
       error: err.message,
-      message: 'Failed to update product'
+      message: 'Failed to update product',
     });
   }
 };
+
 
 exports.deleteProduct = async (req, res) => {
   try {
@@ -131,5 +158,15 @@ exports.deleteProduct = async (req, res) => {
       error: err.message,
       message: 'Failed to delete product'
     });
+  }
+};
+
+exports.getLowStockProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ stock: { $lt: LOW_STOCK_THRESHOLD } });
+    res.status(200).json({ success: true, data: products });
+  } catch (error) {
+    console.error('Error fetching low-stock products:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch low-stock products' });
   }
 };

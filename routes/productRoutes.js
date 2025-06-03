@@ -27,4 +27,7 @@ router.put('/:id', authorize(adminAndInventoryRoles), productController.updatePr
 // ─── Delete a product ───
 router.delete('/:id', authorize(['admin']), productController.deleteProduct);
 
+router.get('/low-stock', productController.getLowStockProducts);
+
+
 module.exports = router;

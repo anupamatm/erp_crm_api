@@ -7,12 +7,14 @@ const cors        = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const { authenticate } = require('./middleware/authMiddleware');
 const customerRoutes = require('./routes/customerRoutes');
+const customerPortalRoutes = require('./routes/customerPortalRoutes');
 const productRoutes = require('./routes/productRoutes');
 const leadRoutes = require('./routes/leadRoutes');
 const salesRoutes = require('./routes/sales');
 const financeRoutes = require('./routes/finance');
 const connectDB   = require('./config/db');
 const userManagementRoutes = require('./routes/userManagementRoutes');
+const User = require('./models/User');
 
 dotenv.config();
 
@@ -26,6 +28,7 @@ connectDB();
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', authenticate, customerRoutes);
+app.use('/api/customer-portal', customerPortalRoutes);
 app.use('/api/sales', authenticate, salesRoutes);
 app.use('/api/products', authenticate, productRoutes);
 app.use('/api/leads', authenticate, leadRoutes);

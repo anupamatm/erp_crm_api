@@ -19,14 +19,15 @@ const formatResponse = (data, page, limit, total) => ({
 
 exports.createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, stock, imageUrl } = req.body;
+    const { name, description, price, category, stock, imageUrl, status } = req.body;
     const product = new Product({
       name,
       description,
       price,
       category,
       stock,
-      imageUrl
+      imageUrl,
+      status
     });
     await product.save();
     res.status(201).json({

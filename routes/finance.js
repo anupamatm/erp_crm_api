@@ -15,7 +15,7 @@ const {
 const { body } = require('express-validator');
 
 // Roles that can access finance routes
-const financeRoles = ['admin', 'sales_manager', 'sales_exec'];
+const financeRoles = ['admin', 'finance', 'sales_manager', 'sales_exec'];
 
 // Get all accounts
 router.get('/accounts', authorize(financeRoles), getAccounts);

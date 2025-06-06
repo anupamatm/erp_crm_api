@@ -38,7 +38,7 @@ router.get(
 router.get(
   '/:id',
  
-  authorize(['admin', 'sales_manager', 'sales_exec']),
+  authorize(['admin', 'sales_manager', 'sales_exec','customer']),
   customerController.getCustomerById
 );
 
@@ -101,5 +101,11 @@ router.get('/:id/payments', authorize(['customer']), async (req, res) => {
     res.status(500).json({ error: 'Error fetching payment history' });
   }
 });
+
+// Get customer profile
+router.get('/:id/profile', authorize(['customer']), customerController.getCustomerProfile);
+
+// Update customer profile
+router.put('/:id/profile', authorize(['customer']), customerController.updateCustomerProfile);
 
 module.exports = router;

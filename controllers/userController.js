@@ -1,12 +1,43 @@
 const User = require('../models/User');
 
-// @desc    Get all users
+// @desc    Get all users with pagination and search
 // @route   GET /api/admin/users
+// @query   page - Page number (default: 1)
+// @query   limit - Number of items per page (default: 10)
+// @query   search - Search term (searches in name and email)
 // @access  Private/Admin
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password');
-    res.status(200).json(users);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const skip = (page - 1) * limit;
+
+    // Build the query for search
+    const query = {};
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Get total count for pagination
+    const total = await User.countDocuments(query);
+    
+    // Get paginated users
+    const users = await User.find(query)
+      .select('-password')
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      data: users,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    });
   } catch (err) {
     console.error('Error getting users:', err);
     res.status(500).json({ error: 'Server error' });

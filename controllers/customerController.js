@@ -163,6 +163,74 @@ exports.deleteCustomer = async (req, res) => {
   }
 };
 
+// Get customer profile
+exports.getCustomerProfile = async (req, res) => {
+  try {
+    const customer = await Customer.findOne({ user: req.params.id })
+      .select('-__v -createdAt -updatedAt')
+      .lean();
+
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    res.json(customer);
+  } catch (err) {
+    console.error('Error fetching customer profile:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Update customer profile
+exports.updateCustomerProfile = async (req, res) => {
+  try {
+    const { name, email, phone, address, company, notes } = req.body;
+    
+    // Find and update customer
+    const customer = await Customer.findOneAndUpdate(
+      { user: req.params.id },
+      { $set: { name, email, phone, address, company, notes } },
+      { new: true, runValidators: true }
+    );
+
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    // Update user email if it was changed
+    if (email) {
+      await User.findByIdAndUpdate(
+        req.params.id,
+        { $set: { email, name } },
+        { new: true, runValidators: true }
+      );
+    }
+
+    res.json({
+      message: 'Profile updated successfully',
+      customer: {
+        ...customer.toJSON(),
+        email
+      }
+    });
+  } catch (err) {
+    console.error('Error updating customer profile:', err);
+    
+    // Handle duplicate key error for email
+    if (err.code === 11000) {
+      return res.status(400).json({ error: 'Email already in use' });
+    }
+    
+    // Handle validation errors
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map(val => val.message);
+      return res.status(400).json({ error: messages.join(', ') });
+    }
+    
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 // Get customer statistics
 exports.getStatistics = async (req, res) => {
   try {

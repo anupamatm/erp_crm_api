@@ -1,6 +1,5 @@
 const Product = require('../models/Product');
 
-const { sendLowStockAlert } = require('../utils/email');
 
 
 const LOW_STOCK_THRESHOLD = 5;

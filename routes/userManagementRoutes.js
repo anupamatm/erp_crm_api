@@ -9,10 +9,13 @@ const {
   changeUserRole,
   createUser  
 } = require('../controllers/userController');
+const customerController = require('../controllers/customerController');
 
-
-
-
+// Customer self-service profile routes
+// Allow customer to get their own profile by user id
+router.get('/customers/:id/profile', authorize(['customer', 'admin']), customerController.getCustomerProfile);
+// Allow customer to update their own profile by user id
+router.put('/customers/:id/profile', authorize(['customer', 'admin']), customerController.updateCustomerProfile);
 
 // Apply admin middleware to all routes in this file
 router.use(authorize(['admin']));

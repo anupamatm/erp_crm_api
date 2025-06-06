@@ -129,12 +129,10 @@ const updateAccount = async (req, res) => {
 
 const deleteAccount = async (req, res) => {
   try {
-    const account = await Account.findById(req.params.id);
-    if (!account) {
+    const result = await Account.deleteOne({ _id: req.params.id });
+    if (result.deletedCount === 0) {
       return res.status(404).json({ message: 'Account not found' });
     }
-
-    await account.remove();
     res.json({ message: 'Account deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });

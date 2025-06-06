@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['admin','sales_manager','sales_exec','inventory_mgr','support','hr','finance','customer'],
     default: 'customer'
+  },
+  notificationPreferences: {
+    email: { type: Boolean, default: true },
+    sms: { type: Boolean, default: false }
   }
 }, {
   timestamps: true

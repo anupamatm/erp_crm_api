@@ -11,6 +11,7 @@ const customerPortalRoutes = require('./routes/customerPortalRoutes');
 const productRoutes = require('./routes/productRoutes');
 const leadRoutes = require('./routes/leadRoutes');
 const salesRoutes = require('./routes/sales');
+const settingsRoutes = require('./routes/settingsRoutes');
 const financeRoutes = require('./routes/finance');
 const connectDB   = require('./config/db');
 const userManagementRoutes = require('./routes/userManagementRoutes');
@@ -34,6 +35,7 @@ app.use('/api/products', authenticate, productRoutes);
 app.use('/api/leads', authenticate, leadRoutes);
 app.use('/api/finance', authenticate, financeRoutes);
 app.use('/api/userManagement', authenticate, userManagementRoutes);
+app.use('/api/settings', settingsRoutes);
 
 
 const PORT = process.env.PORT || 5007;

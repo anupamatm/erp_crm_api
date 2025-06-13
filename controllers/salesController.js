@@ -347,12 +347,20 @@ exports.deleteOrder = async (req, res) => {
 exports.getLastOrder = async (req, res) => {
   try {
     const lastOrder = await SalesOrder.findOne()
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1 })      // Get the most recent order
+      .select('orderNumber')        // Only fetch the orderNumber field
       .lean();
 
-    res.json(lastOrder);
+    if (!lastOrder) {
+      return res.status(404).json({ message: 'No orders found' });
+    }
+
+    res.json({ orderNumber: lastOrder.orderNumber });
   } catch (error) {
-    console.error('Error getting last order:', error);
-    res.status(500).json({ message: 'Error getting last order' });
+    console.error('Error fetching last order number:', error);
+    res.status(500).json({
+      message: 'Error fetching last order number',
+      error: error.message
+    });
   }
 };

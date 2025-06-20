@@ -15,6 +15,11 @@ const productSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  status: {
+    type: String,
+    enum: ['in_stock', 'out_of_stock', 'discontinued', 'not_set'],
+    default: 'not_set',
+  },
   imageUrl: String,
 }, {
   timestamps: true,

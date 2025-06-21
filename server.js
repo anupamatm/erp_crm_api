@@ -18,6 +18,7 @@ const userManagementRoutes = require('./routes/userManagementRoutes');
 const hrRoutes = require('./routes/hrRoutes');
 const User = require('./models/User');
 
+const quotationRoutes = require('./routes/QuotationRoutes');
 dotenv.config();
 
 const app = express();
@@ -36,6 +37,7 @@ app.use('/api/products', authenticate, productRoutes);
 app.use('/api/leads', authenticate, leadRoutes);
 app.use('/api/finance', authenticate, financeRoutes);
 app.use('/api/userManagement', authenticate, userManagementRoutes);
+app.use('/api/quotations', quotationRoutes);
 app.use('/api/hr', authenticate, hrRoutes);
 app.use('/api/settings', settingsRoutes);
 

@@ -1,4 +1,5 @@
 // controllers/employeeController.js
+const mongoose = require('mongoose');
 const Employee = require('../../models/HR/Employee');
 
 exports.getAllEmployees = async (req, res) => {
@@ -81,20 +82,86 @@ exports.getEmployeeStats = async (req, res) => {
   }
 };
 
+const User = require('../../models/User');
+const bcrypt = require('bcryptjs');
+
 exports.createEmployee = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
+    const { email, firstName, lastName, phone, department, position, salary, dateOfJoining } = req.body;
+    
+    // Generate employee ID
     const lastEmployee = await Employee.findOne().sort({ employeeId: -1 });
     let employeeId = 'EMP001';
     if (lastEmployee) {
       const lastId = parseInt(lastEmployee.employeeId.replace('EMP', ''));
       employeeId = `EMP${String(lastId + 1).padStart(3, '0')}`;
     }
-    const employee = new Employee({ ...req.body, employeeId });
-    await employee.save();
-    await employee.populate('department', 'name');
-    res.status(201).json(employee);
+    
+    // Check if user with this email already exists
+    const existingUser = await User.findOne({ email }).session(session);
+    if (existingUser) {
+      throw new Error('A user with this email already exists');
+    }
+
+    // Create user account with employee role
+    const password = '12345'; // Default password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const user = new User({
+      name: `${firstName} ${lastName}`,
+      email,
+      password: hashedPassword,
+      role: 'employee',
+      status: 'active'
+    });
+    
+    const savedUser = await user.save({ session });
+    
+    // Create employee record
+    const employee = new Employee({
+      ...req.body,
+      firstName,
+      lastName,
+      email,
+      phone: req.body.phone || '',
+      employeeId,
+      user: savedUser._id, // Link to user account
+      status: 'active',
+      dateOfJoining: dateOfJoining || new Date(),
+      department: req.body.department,
+      position: req.body.position,
+      salary: req.body.salary,
+      address: req.body.address || {},
+      emergencyContact: req.body.emergencyContact || {}
+    });
+    
+    const savedEmployee = await employee.save({ session });
+    await savedEmployee.populate('department', 'name').execPopulate();
+    
+    await session.commitTransaction();
+    
+    // Prepare response (don't send password)
+    const employeeResponse = savedEmployee.toObject();
+    employeeResponse.user = {
+      _id: savedUser._id,
+      email: savedUser.email,
+      role: savedUser.role,
+      defaultPassword: password // Only included for the initial response
+    };
+    
+    res.status(201).json(employeeResponse);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    await session.abortTransaction();
+    console.error('Error creating employee:', error);
+    res.status(400).json({ 
+      error: 'Failed to create employee',
+      details: error.message 
+    });
+  } finally {
+    session.endSession();
   }
 };
 

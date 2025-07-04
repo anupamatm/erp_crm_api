@@ -9,6 +9,7 @@ exports.createQuotation = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+
 };
 
 // Get all quotations
@@ -20,6 +21,7 @@ exports.getQuotations = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // Get a single quotation
 exports.getQuotationById = async (req, res) => {
@@ -57,3 +59,5 @@ exports.convertToOrder = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+

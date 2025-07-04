@@ -7,7 +7,7 @@ const router = express.Router();
 
 // Roles for product routes
 const adminAndInventoryRoles = ['admin', 'inventory_manager'];
-const allRoles = ['admin', 'sales_exec', 'inventory_manager'];
+const allRoles = ['admin', 'sales_exec', 'sales_manager', 'inventory_manager', 'finance'];
 
 // Apply authentication and authorization globally for product routes
 router.use(authenticate);
@@ -26,5 +26,8 @@ router.put('/:id', authorize(adminAndInventoryRoles), productController.updatePr
 
 // ─── Delete a product ───
 router.delete('/:id', authorize(['admin']), productController.deleteProduct);
+
+router.get('/low-stock', productController.getLowStockProducts);
+
 
 module.exports = router;

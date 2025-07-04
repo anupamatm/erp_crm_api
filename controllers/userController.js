@@ -1,12 +1,44 @@
 const User = require('../models/User');
+const Customer = require('../models/Customer');
 
-// @desc    Get all users
+// @desc    Get all users with pagination and search
 // @route   GET /api/admin/users
+// @query   page - Page number (default: 1)
+// @query   limit - Number of items per page (default: 10)
+// @query   search - Search term (searches in name and email)
 // @access  Private/Admin
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password');
-    res.status(200).json(users);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const skip = (page - 1) * limit;
+
+    // Build the query for search
+    const query = {};
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Get total count for pagination
+    const total = await User.countDocuments(query);
+    
+    // Get paginated users
+    const users = await User.find(query)
+      .select('-password')
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      data: users,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    });
   } catch (err) {
     console.error('Error getting users:', err);
     res.status(500).json({ error: 'Server error' });
@@ -49,8 +81,18 @@ exports.createUser = async (req, res) => {
 
     // Create new user
     const user = new User({ name, email, password, role });
+    
     await user.save();
-
+     // If user is a customer, create a customer profile
+     if (role === 'customer') {
+      const customer = new Customer({
+        user: user._id,
+        name,
+        email,
+        status: 'active' // default status
+      });
+      await customer.save();
+    }
     // Remove password from response
     const userResponse = user.toObject();
     delete userResponse.password;
@@ -74,31 +116,44 @@ exports.createUser = async (req, res) => {
 // @access  Private/Admin
 exports.updateUser = async (req, res) => {
   try {
-    const { name, email, role } = req.body;
-    
-    // Check if user exists
+    const { name, email, role, password } = req.body;
     let user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Track if user was a customer before role change
+    const wasCustomer = user.role === 'customer';
+
     // Update user fields
     user.name = name || user.name;
     user.email = email || user.email;
-    if (role) {
-      user.role = role;
-    }
+    if (role) user.role = role;
+    if (password) user.password = password;
 
     await user.save();
-    
-    // Remove password from response
+
+    // If user is/was a customer, update or remove Customer record
+    if (role === 'customer' || wasCustomer) {
+      let customer = await Customer.findOne({ user: user._id });
+      if (role === 'customer') {
+        // Update or create customer
+        if (customer) {
+          if (name) customer.name = name;
+          if (email) customer.email = email;
+          await customer.save();
+        } else {
+          await Customer.create({ user: user._id, name: user.name, email: user.email, status: 'active' });
+        }
+      } else if (wasCustomer && role !== 'customer' && customer) {
+        // If role changed away from customer, remove customer record
+        await customer.deleteOne();
+      }
+    }
+
     user = user.toObject();
     delete user.password;
-    
-    res.status(200).json({
-      message: 'User updated successfully',
-      user
-    });
+    res.status(200).json({ message: 'User updated successfully', user });
   } catch (err) {
     console.error('Error updating user:', err);
     if (err.code === 11000) {
@@ -114,11 +169,13 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
-    
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+    // Remove associated customer if user was a customer
+    if (user.role === 'customer') {
+      await Customer.deleteOne({ user: user._id });
+    }
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (err) {
     console.error('Error deleting user:', err);

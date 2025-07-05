@@ -93,8 +93,15 @@ const updateLead = async (req, res) => {
     }
 
     // Check if user is authorized to update this lead
-    if (lead.user.toString() !== req.user.id && req.user.role !== 'admin') {
-      return res.status(401).json({ msg: 'Not authorized' });
+    // Allow: admin, sales_manager, or the user who created the lead
+    if (lead.user.toString() !== req.user.id && 
+        req.user.role !== 'admin' && 
+        req.user.role !== 'sales_manager') {
+      return res.status(403).json({ 
+        msg: 'Not authorized',
+        code: 'UNAUTHORIZED',
+        requiredRole: 'admin, sales_manager, or lead owner'
+      });
     }
 
     lead.set(req.body);

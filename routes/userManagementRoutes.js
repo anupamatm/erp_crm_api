@@ -17,13 +17,13 @@ router.get('/customers/:id/profile', authorize(['customer', 'admin']), customerC
 // Allow customer to update their own profile by user id
 router.put('/customers/:id/profile', authorize(['customer', 'admin']), customerController.updateCustomerProfile);
 
-// Apply admin middleware to all routes in this file
-router.use(authorize(['admin']));
-
 // @route   GET /api/admin/users
 // @desc    Get all users
-// @access  Private/Admin
-router.get('/users', getAllUsers);
+// @access  Private/Admin, Sales Manager
+router.get('/users', authorize(['admin', 'sales_manager']), getAllUsers);
+
+// Apply admin middleware to remaining routes
+router.use(authorize(['admin']));
 
 // @route   POST /api/admin/users
 // @desc    Create new user

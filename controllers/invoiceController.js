@@ -75,11 +75,19 @@ exports.createInvoice = async (req, res) => {
       };
     }
 
+    // Calculate balance (totalAmount - amountPaid)
+    const totalAmount = invoiceData.totalAmount || 0;
+    const amountPaid = invoiceData.amountPaid || 0;
+    const balance = totalAmount - amountPaid;
+
     const invoice = new Invoice({
       ...invoiceData,
       createdBy: req.user._id,
-      issueDate: new Date(),
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+      issueDate: invoiceData.issueDate || new Date(),
+      dueDate: invoiceData.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      amountPaid: amountPaid,
+      balance: balance,
+      status: amountPaid >= totalAmount ? 'paid' : (amountPaid > 0 ? 'partially_paid' : 'draft')
     });
 
     await invoice.save();

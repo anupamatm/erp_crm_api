@@ -1,26 +1,35 @@
 const User = require('../models/User');
 const Customer = require('../models/Customer');
 
-// @desc    Get all users with pagination and search
+// @desc    Get all users with pagination, search, and role filtering
 // @route   GET /api/admin/users
 // @query   page - Page number (default: 1)
 // @query   limit - Number of items per page (default: 10)
 // @query   search - Search term (searches in name and email)
-// @access  Private/Admin
+// @query   role - Filter by user role (e.g., 'sales_exec')
+// @access  Private/Admin, Sales Manager
 exports.getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || '';
+    const role = req.query.role;
     const skip = (page - 1) * limit;
 
-    // Build the query for search
+    // Build the query for search and role filtering
     const query = {};
+    
+    // Add search conditions
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } }
       ];
+    }
+    
+    // Add role filter if provided
+    if (role) {
+      query.role = role;
     }
 
     // Get total count for pagination

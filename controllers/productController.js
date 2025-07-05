@@ -20,6 +20,7 @@ const formatResponse = (data, page, limit, total) => ({
 exports.createProduct = async (req, res) => {
   try {
     const { name, description, price, category, stock, imageUrl, status } = req.body;
+    console.log('Received status:', status); 
     const product = new Product({
       name,
       description,
@@ -55,7 +56,7 @@ exports.getAllProducts = async (req, res) => {
     if (maxPrice) query.price = { ...query.price, $lte: parseFloat(maxPrice) };
 
     const total = await Product.countDocuments(query);
-    const products = await Product.find(query)
+    const products = await Product.find(query).populate('category', 'name')
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
@@ -73,7 +74,7 @@ exports.getAllProducts = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate('category', 'name');
     if (!product) {
       return res.status(404).json({
         success: false,

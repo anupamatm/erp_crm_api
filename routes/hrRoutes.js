@@ -5,52 +5,69 @@ const leaveController = require('../controllers/hr/leaveController');
 const attendanceController = require('../controllers/hr/attendanceController');
 const departmentController = require('../controllers/hr/departmentController');
 const payrollController = require('../controllers/hr/payrollController');
+const performanceController = require('../controllers/hr/performanceController');
+const recruitmentController = require('../controllers/hr/recruitmentController');
 const { authenticate, authorize } = require('../middleware/authMiddleware');
 
-// Allowed roles
+// Define roles
 const hrRoles = ['admin', 'manager', 'hr'];
+const allRoles = ['admin', 'manager', 'hr', 'employee', 'sales', 'accounts'];
 
-// Apply authentication and authorization to all HR routes
+// Apply authentication to all HR routes
 router.use(authenticate);
-router.use(authorize(hrRoles));
 
 /** Employee Routes */
-// Basic employee list without any population
-router.get('/employees/basic', employeeController.getBasicEmployeeList);
-
-// Full employee details with populated fields
-router.get('/employees', employeeController.getAllEmployees);
-router.get('/employees/stats', employeeController.getEmployeeStats);
-router.get('/employees/:id', employeeController.getEmployeeById);
-router.post('/employees', employeeController.createEmployee);
-router.put('/employees/:id', employeeController.updateEmployee);
-router.delete('/employees/:id', employeeController.deleteEmployee);
+router.get('/employees/basic', authorize(hrRoles), employeeController.getBasicEmployeeList);
+router.get('/employees', authorize(hrRoles), employeeController.getAllEmployees);
+router.get('/employees/stats', authorize(hrRoles), employeeController.getEmployeeStats);
+router.get('/employees/:id', authorize(hrRoles), employeeController.getEmployeeById);
+router.post('/employees', authorize(hrRoles), employeeController.createEmployee);
+router.put('/employees/:id', authorize(hrRoles), employeeController.updateEmployee);
+router.delete('/employees/:id', authorize(hrRoles), employeeController.deleteEmployee);
 
 /** Leave Routes */
-router.get('/leaves', leaveController.getLeaveRequests);
-router.get('/leaves/:id', leaveController.getLeaveRequest);
-router.post('/leaves', leaveController.createLeaveRequest);
-router.put('/leaves/:id', leaveController.updateLeaveRequest);
-router.delete('/leaves/:id', leaveController.deleteLeaveRequest);
-router.put('/leaves/approve/:id', leaveController.updateLeaveRequest);
-router.put('/leaves/reject/:id', leaveController.updateLeaveRequest);
+router.get('/leaves', authorize(allRoles), leaveController.getLeaveRequests);
+router.get('/leaves/:id', authorize(allRoles), leaveController.getLeaveRequest);
+router.post('/leaves', authorize(allRoles), leaveController.createLeaveRequest);
+router.put('/leaves/:id', authorize(hrRoles), leaveController.updateLeaveRequest);
+router.delete('/leaves/:id', authorize(hrRoles), leaveController.deleteLeaveRequest);
+router.put('/leaves/approve/:id', authorize(hrRoles), leaveController.updateLeaveRequest);
+router.put('/leaves/reject/:id', authorize(hrRoles), leaveController.updateLeaveRequest);
 
 /** Attendance Routes */
-router.get('/attendance', attendanceController.getAttendance);
-router.get('/attendance/employee/:employeeId', attendanceController.getEmployeeAttendance);
-router.post('/attendance', attendanceController.markAttendance);
-router.put('/attendance/:id', attendanceController.updateAttendance);
-router.delete('/attendance/:id', attendanceController.deleteAttendance);
+router.get('/attendance', authorize(hrRoles), attendanceController.getAttendance);
+router.get('/attendance/summary', authorize(hrRoles), attendanceController.getAttendanceSummary);
+router.post('/attendance/clockin', authorize(allRoles), attendanceController.clockIn);
+router.post('/attendance/clockout', authorize(allRoles), attendanceController.clockOut);
+router.post('/attendance', authorize(hrRoles), attendanceController.markAttendance);
+router.get('/attendance/:employeeId', authorize(allRoles), attendanceController.getEmployeeAttendance);
+router.delete('/attendance/:id', authorize(hrRoles), attendanceController.deleteAttendance);
 
 /** Department Routes */
-router.get('/departments', departmentController.getDepartments);
-router.get('/departments/:id', departmentController.getDepartmentById);
-router.post('/departments', departmentController.createDepartment);
-router.put('/departments/:id', departmentController.updateDepartment);
-router.delete('/departments/:id', departmentController.deleteDepartment);
+router.get('/departments', authorize(allRoles), departmentController.getDepartments);
+router.get('/departments/:id', authorize(allRoles), departmentController.getDepartmentById);
+router.post('/departments', authorize(hrRoles), departmentController.createDepartment);
+router.put('/departments/:id', authorize(hrRoles), departmentController.updateDepartment);
+router.delete('/departments/:id', authorize(hrRoles), departmentController.deleteDepartment);
 
 /** Payroll Routes */
-router.get('/payroll', payrollController.getPayrollRecords);
-router.post('/payroll/process', payrollController.processPayroll);
+router.get('/payroll', authorize(hrRoles), payrollController.getPayrollRecords);
+router.post('/payroll/process', authorize(hrRoles), payrollController.processPayroll);
+router.get('/payroll/export', authorize(hrRoles), payrollController.exportPayroll);
+router.get('/payroll/payslip/:id', authorize(allRoles), payrollController.getPaySlip);
+
+/** Performance Routes */
+router.get('/performance', authorize(hrRoles), performanceController.getPerformanceReviews);
+router.get('/performance/:id', authorize(hrRoles), performanceController.getPerformanceReviewById);
+router.post('/performance', authorize(hrRoles), performanceController.createPerformanceReview);
+router.put('/performance/:id', authorize(hrRoles), performanceController.updatePerformanceReview);
+router.delete('/performance/:id', authorize(hrRoles), performanceController.deletePerformanceReview);
+
+/** Recruitment Routes */
+router.get('/recruitment/openings', authorize(hrRoles), recruitmentController.getJobOpenings);
+router.get('/recruitment/openings/:id', authorize(hrRoles), recruitmentController.getJobOpeningById);
+router.post('/recruitment/openings', authorize(hrRoles), recruitmentController.createJobOpening);
+router.put('/recruitment/openings/:id', authorize(hrRoles), recruitmentController.updateJobOpening);
+router.delete('/recruitment/openings/:id', authorize(hrRoles), recruitmentController.deleteJobOpening);
 
 module.exports = router;

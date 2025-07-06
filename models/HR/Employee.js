@@ -21,7 +21,7 @@ const employeeSchema = new mongoose.Schema({
     match: [/^[0-9\-\+\s()]*$/, 'Please use a valid phone number']
   },
   department: { 
-    type: String, 
+    type: mongoose.Schema.Types.ObjectId, 
     required: true,
     ref: 'Department' 
   },

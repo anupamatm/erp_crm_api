@@ -8,4 +8,12 @@ const departmentSchema = new mongoose.Schema({
   status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 }, { timestamps: true });
 
+departmentSchema.virtual('id').get(function(){
+    return this._id.toHexString();
+});
+
+departmentSchema.set('toJSON', {
+    virtuals: true
+});
+
 module.exports = mongoose.model('Department', departmentSchema);

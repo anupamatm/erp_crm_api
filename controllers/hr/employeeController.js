@@ -4,23 +4,7 @@ const Employee = require('../../models/HR/Employee');
 
 exports.getAllEmployees = async (req, res) => {
   try {
-    // First, check if manager field exists in the schema
-    const employeeSchema = Employee.schema.obj;
-    const hasManagerField = 'manager' in employeeSchema;
-    
-    let query = Employee.find();
-    
-    // Only populate department if it exists in the schema
-    if ('department' in employeeSchema) {
-      query = query.populate('department', 'name');
-    }
-    
-    // Only populate manager if it exists in the schema
-    if (hasManagerField) {
-      query = query.populate('manager', 'firstName lastName');
-    }
-    
-    const employees = await query.sort({ createdAt: -1 });
+    const employees = await Employee.find({}).populate('department').sort({ createdAt: -1 });
     res.json(employees);
   } catch (error) {
     console.error('Error fetching employees:', error);
@@ -114,32 +98,32 @@ exports.createEmployee = async (req, res) => {
       name: `${firstName} ${lastName}`,
       email,
       password: hashedPassword,
-      role: 'employee',
-      status: 'active'
+      role: 'hr'
     });
     
     const savedUser = await user.save({ session });
     
     // Create employee record
-    const employee = new Employee({
-      ...req.body,
+    const employeeData = {
       firstName,
       lastName,
       email,
-      phone: req.body.phone || '',
+      phone,
+      department,
+      position,
+      salary,
+      dateOfJoining: dateOfJoining ? new Date(dateOfJoining) : new Date(),
+      address: req.body.address || { street: '', city: '', state: '', country: '', zipCode: '' },
+      emergencyContact: req.body.emergencyContact || { name: '', relation: '', phone: '' },
       employeeId,
-      user: savedUser._id, // Link to user account
+      user: savedUser._id,
       status: 'active',
-      dateOfJoining: dateOfJoining || new Date(),
-      department: req.body.department,
-      position: req.body.position,
-      salary: req.body.salary,
-      address: req.body.address || {},
-      emergencyContact: req.body.emergencyContact || {}
-    });
+    };
+
+    const employee = new Employee(employeeData);
     
     const savedEmployee = await employee.save({ session });
-    await savedEmployee.populate('department', 'name').execPopulate();
+    await savedEmployee.populate('department', 'name');
     
     await session.commitTransaction();
     

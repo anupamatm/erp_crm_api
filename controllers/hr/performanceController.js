@@ -70,14 +70,14 @@ exports.updatePerformanceReview = async (req, res) => {
 // @access  Private (HR)
 exports.deletePerformanceReview = async (req, res) => {
   try {
-    const review = await Performance.findById(req.params.id);
+    const review = await Performance.findByIdAndDelete(req.params.id);
     if (!review) {
       return res.status(404).json({ message: 'Performance review not found' });
     }
-
-    await review.remove();
-    res.status(200).json({ message: 'Performance review removed' });
+    
+    res.status(200).json({ message: 'Performance review removed', id: review._id });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    console.error('Error deleting performance review:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

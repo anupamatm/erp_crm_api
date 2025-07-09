@@ -21,6 +21,7 @@ const User = require('./models/User');
 const quotationRoutes = require('./routes/QuotationRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const couponRoutes = require('./routes/couponRoutes');
 dotenv.config();
 
 const app = express();
@@ -44,6 +45,7 @@ app.use('/api/hr', authenticate, hrRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/invoices', authenticate, invoiceRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/sales/coupons', authenticate, couponRoutes);
 
 // Error handling middleware
 const errorHandler = require('./middleware/error');

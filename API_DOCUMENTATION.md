@@ -507,7 +507,7 @@ When endpoints support pagination, the response will include:
 - **admin**: Full access to all features
 - **sales_manager**: Access to sales, customers, and reports
 - **sales_exec**: Access to sales and assigned customers
-- **inventory_manager**: Access to products and inventory management
+- **inventory_mgr**: Access to products and inventory management
 - **customer**: Access to own orders and invoices
 
 ## Additional Features

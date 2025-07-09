@@ -6,8 +6,8 @@ const productController = require('../controllers/productController');
 const router = express.Router();
 
 // Roles for product routes
-const adminAndInventoryRoles = ['admin', 'inventory_manager'];
-const allRoles = ['admin', 'sales_exec', 'sales_manager', 'inventory_manager', 'finance'];
+const adminAndInventoryRoles = ['admin', 'inventory_mgr'];
+const allRoles = ['admin', 'sales_exec', 'sales_manager', 'inventory_mgr', 'finance'];
 
 // Apply authentication and authorization globally for product routes
 router.use(authenticate);

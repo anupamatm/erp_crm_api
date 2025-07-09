@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   password:   { type: String, required: true },
   role: {
     type: String,
-    enum: ['admin','sales_manager','sales_exec','inventory_mgr','support','hr','finance','customer'],
+    enum: ['admin','sales_manager','sales_exec','inventory_mgr','support','hr','finance','customer','lead_manager'],
     default: 'customer'
   },
   notificationPreferences: {

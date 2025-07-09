@@ -5,7 +5,7 @@ const leadController = require('../controllers/leadController');
 const { authenticate, authorize } = require('../middleware/authMiddleware');
 
 // Roles that can access lead routes
-const leadRoles = ['admin', 'sales_manager', 'sales_exec'];
+const leadRoles = ['admin', 'sales_manager', 'sales_exec','lead_manager'];
 
 // Apply authentication and authorization to all lead routes
 router.use(authorize(leadRoles));

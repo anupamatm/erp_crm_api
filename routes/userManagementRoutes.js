@@ -20,7 +20,7 @@ router.put('/customers/:id/profile', authorize(['customer', 'admin']), customerC
 // @route   GET /api/admin/users
 // @desc    Get all users
 // @access  Private/Admin, Sales Manager
-router.get('/users', authorize(['admin', 'sales_manager', 'hr']), getAllUsers);
+router.get('/users', authorize(['admin', 'sales_manager', 'hr','lead_manager']), getAllUsers);
 
 // Apply admin middleware to remaining routes
 router.use(authorize(['admin']));

@@ -17,6 +17,16 @@ const getCoupons = async (req, res, next) => {
 // Create new coupon
 const createCoupon = async (req, res, next) => {
   try {
+    const { code } = req.body;
+    // Check if coupon with this code already exists
+    const existingCoupon = await Coupon.findOne({ code });
+    if (existingCoupon) {
+      return res.status(400).json({ 
+        message: 'A coupon with this code already exists',
+        existingCoupon
+      });
+    }
+    
     const coupon = new Coupon(req.body);
     await coupon.save();
     res.status(201).json(coupon);
